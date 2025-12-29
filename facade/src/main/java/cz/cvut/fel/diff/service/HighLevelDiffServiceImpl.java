@@ -9,6 +9,8 @@ import java.util.stream.Collectors;
 
 public class HighLevelDiffServiceImpl implements HighLevelDiffService{
 
+    private static final String SUBCLASS_PROP = "rdfs:subClassOf";
+
     public Set<NodeCreation> computeNodeCreations(DiffResult diff) {
         OWLOntology update = diff.getUpdate();
         OWLOntology original = diff.getOriginal();
@@ -211,20 +213,15 @@ public class HighLevelDiffServiceImpl implements HighLevelDiffService{
         return result;
     }
 
-    private static boolean isEdgeAnnotationProperty(OWLAnnotationProperty prop) {
-        return EdgeProperty.ANNOTATION_EDGE_PROPERTIES.contains(prop.getIRI().toString());
-    }
-
     private Set<EdgeCreation> extractEdgesFromAxiom(OWLAxiom axiom) {
         Set<EdgeCreation> result = new HashSet<>();
-
         if (axiom instanceof OWLSubClassOfAxiom sc) {
             if (sc.getSubClass().isNamed() && sc.getSuperClass().isNamed()) {
                 OWLClass sub = sc.getSubClass().asOWLClass();
                 OWLClass sup = sc.getSuperClass().asOWLClass();
                 result.add(new EdgeCreation(
                         sub.getIRI().toString(),
-                        "rdfs:subClassOf",
+                        SUBCLASS_PROP,
                         sup.getIRI().toString()
                 ));
             }
@@ -264,16 +261,13 @@ public class HighLevelDiffServiceImpl implements HighLevelDiffService{
             }
 
         } else if (axiom instanceof OWLAnnotationAssertionAxiom annAx) {
-            OWLAnnotationProperty prop = annAx.getProperty();
-            if (!isEdgeAnnotationProperty(prop)) {
-                return result;
-            }
             if (!(annAx.getSubject() instanceof IRI subjIri)) {
                 return result;
             }
             if (!(annAx.getValue() instanceof IRI objIri)) {
                 return result;
             }
+            OWLAnnotationProperty prop = annAx.getProperty();
             result.add(new EdgeCreation(
                     subjIri.toString(),
                     prop.getIRI().toString(),
@@ -283,6 +277,8 @@ public class HighLevelDiffServiceImpl implements HighLevelDiffService{
 
         return result;
     }
+
+
 
     private Set<EdgeCreation> computeEdgeCreations(DiffResult diff) {
         return diff.getOnlyInUpdate().stream()
@@ -307,9 +303,7 @@ public class HighLevelDiffServiceImpl implements HighLevelDiffService{
             if (!property.equals(e.propIri())){
                 continue;
             }
-            deletedParents
-                    .computeIfAbsent(e.srcIri(), k -> new HashSet<>())
-                    .add(e.tgtIri());
+            deletedParents.computeIfAbsent(e.srcIri(), k -> new HashSet<>()).add(e.tgtIri());
         }
 
         Map<String, Set<String>> addedParents = new HashMap<>();
@@ -317,10 +311,8 @@ public class HighLevelDiffServiceImpl implements HighLevelDiffService{
             if (!property.equals(e.propIri())){
                 continue;
             }
-            addedParents.computeIfAbsent(e.srcIri(), k -> new HashSet<>())
-                    .add(e.tgtIri());
+            addedParents.computeIfAbsent(e.srcIri(), k -> new HashSet<>()).add(e.tgtIri());
         }
-
         Set<NodeMove> result = new HashSet<>();
         for (String child : deletedParents.keySet()) {
             Set<String> olds = deletedParents.get(child);
@@ -338,49 +330,299 @@ public class HighLevelDiffServiceImpl implements HighLevelDiffService{
         return result;
     }
 
-//    private Set<PredicateChange> computePredicateChanges(Set<EdgeCreation> edgeCreations,
-//                                                         Set<EdgeDeletion> edgeDeletions) {
-//
-//        Map<SrcTgt, Set<String>> deletedProps = new HashMap<>();
-//        for (EdgeDeletion e : edgeDeletions) {
-//            SrcTgt key = new SrcTgt(e.srcIri(), e.tgtIri());
-//            deletedProps
-//                    .computeIfAbsent(key, k -> new HashSet<>())
-//                    .add(e.propIri());
-//        }
-//
-//        // Map (src,tgt) -> set of predicates that were added
-//        Map<SrcTgt, Set<String>> addedProps = new HashMap<>();
-//        for (EdgeCreation e : edgeCreations) {
-//            SrcTgt key = new SrcTgt(e.srcIri(), e.tgtIri());
-//            addedProps
-//                    .computeIfAbsent(key, k -> new HashSet<>())
-//                    .add(e.propIri());
-//        }
-//
-//        Set<PredicateChange> result = new HashSet<>();
-//
-//        for (Map.Entry<SrcTgt, Set<String>> entry : deletedProps.entrySet()) {
-//            SrcTgt key          = entry.getKey();
-//            Set<String> oldPred = entry.getValue();
-//            Set<String> newPred = addedProps.getOrDefault(key, Set.of());
-//
-//            if (newPred.isEmpty()) {
-//                continue;
-//            }
-//
-//            for (String oldP : oldPred) {
-//                for (String newP : newPred) {
-//                    if (oldP.equals(newP)) {
-//                        continue;
-//                    }
-//                    result.add(new PredicateChange(key.srcIri(), oldP, newP));
-//                }
-//            }
-//        }
-//
-//        return result;
-//    }
+    private Set<PredicateChange> computePredicateChanges(Set<EdgeCreation> edgeCreations,
+                                                         Set<EdgeDeletion> edgeDeletions) {
+        Map<SrcTgt, Set<String>> deletedProps = new HashMap<>();
+        for (EdgeDeletion e : edgeDeletions) {
+            SrcTgt key = new SrcTgt(e.srcIri(), e.tgtIri());
+            deletedProps.computeIfAbsent(key, k -> new HashSet<>())
+                    .add(e.propIri());
+        }
+
+        Map<SrcTgt, Set<String>> addedProps = new HashMap<>();
+        for (EdgeCreation e : edgeCreations) {
+            SrcTgt key = new SrcTgt(e.srcIri(), e.tgtIri());
+            addedProps.computeIfAbsent(key, k -> new HashSet<>())
+                    .add(e.propIri());
+        }
+
+        Set<PredicateChange> result = new HashSet<>();
+
+        for (Map.Entry<SrcTgt, Set<String>> entry : deletedProps.entrySet()) {
+            SrcTgt key = entry.getKey();
+            Set<String> oldPred = entry.getValue();
+            Set<String> newPred = addedProps.getOrDefault(key, Collections.emptySet());
+            if (newPred.isEmpty()) continue;
+
+            for (String oldP : oldPred) {
+                for (String newP : newPred) {
+                    if (oldP.equals(newP)) continue;
+                    result.add(new PredicateChange(key.srcIri(), oldP, newP));
+                }
+            }
+        }
+
+        return result;
+    }
+
+    private Set<NodeRename> computeNodeRenames(DiffResult diff) {
+        OWLOntology original = diff.getOriginal();
+        OWLOntology update   = diff.getUpdate();
+
+        Set<OWLClass> oldClasses = original.getClassesInSignature();
+        Set<OWLClass> newClasses = update.getClassesInSignature();
+
+        Set<OWLClass> common = new HashSet<>(oldClasses);
+        common.retainAll(newClasses);
+
+        Set<NodeRename> result = new HashSet<>();
+
+        for (OWLClass cls : common) {
+            IRI iri = cls.getIRI();
+
+            Set<OWLLiteral> oldLabels = getLabels(iri, original);
+            Set<OWLLiteral> newLabels = getLabels(iri, update);
+
+            Set<OWLLiteral> removed = new HashSet<>(oldLabels);
+            removed.removeAll(newLabels);
+
+            // labels that appeared
+            Set<OWLLiteral> added = new HashSet<>(newLabels);
+            added.removeAll(oldLabels);
+
+            if (removed.isEmpty() || added.isEmpty()) {
+                continue;
+            }
+
+            for (OWLLiteral oldLit : removed) {
+                for (OWLLiteral newLit : added) {
+                    String oldLabel = labelToDisplay(oldLit);
+                    String newLabel = labelToDisplay(newLit);
+                    if (oldLabel.equals(newLabel)) {
+                        continue;
+                    }
+                    result.add(new NodeRename(
+                            iri.toString(),
+                            oldLabel,
+                            newLabel
+                    ));
+                }
+            }
+        }
+
+        return result;
+    }
+
+    private Set<OWLLiteral> getLabels(IRI entityIri, OWLOntology ont) {
+        Set<OWLLiteral> result = new HashSet<>();
+
+        for (OWLOntology o : ont.getImportsClosure()) {
+            for (OWLAnnotationAssertionAxiom ax : o.getAnnotationAssertionAxioms(entityIri)) {
+                if (!ax.getProperty().getIRI().equals(OWLRDFVocabulary.RDFS_LABEL.getIRI())) {
+                    continue;
+                }
+                if (ax.getValue() instanceof OWLLiteral lit) {
+                    result.add(lit);
+                }
+            }
+        }
+
+        return result;
+    }
+
+    private String labelToDisplay(OWLLiteral lit) {
+        String s = lit.getLiteral();
+        if (lit.hasLang()) {
+            s = s + "@" + lit.getLang();
+        } else if (!lit.isRDFPlainLiteral() && lit.getDatatype() != null) {
+            s = s + "^^" + lit.getDatatype().getIRI();
+        }
+        return s;
+    }
+
+    private Set<OWLLiteral> getDefinitions(IRI entityIri, OWLOntology ont) {
+        Set<OWLLiteral> result = new HashSet<>();
+
+        for (OWLOntology o : ont.getImportsClosure()) {
+            for (OWLAnnotationAssertionAxiom ax : o.getAnnotationAssertionAxioms(entityIri)) {
+                IRI propIri = ax.getProperty().getIRI();
+                if (propIri == null) continue;
+                if (!TextDefinitionProperties.TEXT_DEFINITION_PROPERTIES.contains(propIri.toString())){
+                    continue;
+                }
+                if (ax.getValue() instanceof OWLLiteral lit) {
+                    result.add(lit);
+                }
+            }
+        }
+        return result;
+    }
+
+    private String definitionToDisplay(OWLLiteral lit) {
+        String s = lit.getLiteral();
+        if (lit.hasLang()) {
+            s = s + "@" + lit.getLang();
+        } else if (!lit.isRDFPlainLiteral() && lit.getDatatype() != null) {
+            s = s + "^^" + lit.getDatatype().getIRI();
+        }
+        return s;
+    }
+
+    private Set<NewTextDefinition> computeNewTextDefinitions(DiffResult diff) {
+        OWLOntology original = diff.getOriginal();
+        OWLOntology update   = diff.getUpdate();
+
+        Set<OWLClass> oldClasses = original.getClassesInSignature();
+        Set<OWLClass> newClasses = update.getClassesInSignature();
+
+        Set<OWLClass> common = new HashSet<>(oldClasses);
+        common.retainAll(newClasses);
+
+        Set<NewTextDefinition> result = new HashSet<>();
+
+        for (OWLClass cls : common) {
+            IRI iri = cls.getIRI();
+
+            Set<OWLLiteral> oldDefs = getDefinitions(iri, original);
+            Set<OWLLiteral> newDefs = getDefinitions(iri, update);
+            Set<OWLLiteral> added = new HashSet<>(newDefs);
+            added.removeAll(oldDefs);
+
+            for (OWLLiteral newDef : added) {
+                result.add(new NewTextDefinition(
+                        iri.toString(),
+                        definitionToDisplay(newDef)
+                ));
+            }
+        }
+
+        return result;
+    }
+
+    private Set<RemoveTextDefinition> computeRemoveTextDefinitions(DiffResult diff) {
+        OWLOntology original = diff.getOriginal();
+        OWLOntology update   = diff.getUpdate();
+
+        Set<OWLClass> oldClasses = original.getClassesInSignature();
+        Set<OWLClass> newClasses = update.getClassesInSignature();
+
+        Set<OWLClass> common = new HashSet<>(oldClasses);
+        common.retainAll(newClasses);
+
+        Set<RemoveTextDefinition> result = new HashSet<>();
+
+        for (OWLClass cls : common) {
+            IRI iri = cls.getIRI();
+
+            Set<OWLLiteral> oldDefs = getDefinitions(iri, original);
+            Set<OWLLiteral> newDefs = getDefinitions(iri, update);
+
+            Set<OWLLiteral> removed = new HashSet<>(oldDefs);
+            removed.removeAll(newDefs);
+
+            for (OWLLiteral oldDef : removed) {
+                result.add(new RemoveTextDefinition(
+                        iri.toString(),
+                        definitionToDisplay(oldDef)
+                ));
+            }
+        }
+
+        return result;
+    }
+
+    private Set<NodeTextDefinitionChange> computeNodeTextDefinitionChanges(DiffResult diff) {
+        OWLOntology original = diff.getOriginal();
+        OWLOntology update   = diff.getUpdate();
+
+        Set<OWLClass> oldClasses = original.getClassesInSignature();
+        Set<OWLClass> newClasses = update.getClassesInSignature();
+
+        Set<OWLClass> common = new HashSet<>(oldClasses);
+        common.retainAll(newClasses);
+
+        Set<NodeTextDefinitionChange> result = new HashSet<>();
+
+        for (OWLClass cls : common) {
+            IRI iri = cls.getIRI();
+
+            Set<OWLLiteral> oldDefs = getDefinitions(iri, original);
+            Set<OWLLiteral> newDefs = getDefinitions(iri, update);
+
+            Set<OWLLiteral> removed = new HashSet<>(oldDefs);
+            removed.removeAll(newDefs);
+
+            Set<OWLLiteral> added = new HashSet<>(newDefs);
+            added.removeAll(oldDefs);
+
+            if (removed.isEmpty() || added.isEmpty()) {
+                continue;
+            }
+
+            for (OWLLiteral oldLit : removed) {
+                for (OWLLiteral newLit : added) {
+                    String oldText = definitionToDisplay(oldLit);
+                    String newText = definitionToDisplay(newLit);
+                    if (oldText.equals(newText)) {
+                        continue;
+                    }
+                    result.add(new NodeTextDefinitionChange(
+                            iri.toString(),
+                            oldText,
+                            newText
+                    ));
+                }
+            }
+        }
+
+        return result;
+    }
+
+    private Set<NewSynonym> computeNewSynonyms(DiffResult diff) {
+        Map<String, Map<String, Set<OWLLiteral>>> addedSyns =
+                collectSynonymLiterals(diff.getOnlyInUpdate());
+
+        Set<NewSynonym> result = new HashSet<>();
+
+        for (var entEntry : addedSyns.entrySet()) {
+            String entityIri = entEntry.getKey();
+            for (var propEntry : entEntry.getValue().entrySet()) {
+                String propIri = propEntry.getKey();
+                for (OWLLiteral lit : propEntry.getValue()) {
+                    result.add(new NewSynonym(
+                            entityIri,
+                            propIri,
+                            literalToDisplay(lit)
+                    ));
+                }
+            }
+        }
+
+        return result;
+    }
+
+    private Set<RemoveSynonym> computeRemoveSynonyms(DiffResult diff) {
+        Map<String, Map<String, Set<OWLLiteral>>> removedSyns =
+                collectSynonymLiterals(diff.getOnlyInOriginal());
+
+        Set<RemoveSynonym> result = new HashSet<>();
+
+        for (var entEntry : removedSyns.entrySet()) {
+            String entityIri = entEntry.getKey();
+            for (var propEntry : entEntry.getValue().entrySet()) {
+                String propIri = propEntry.getKey();
+                for (OWLLiteral lit : propEntry.getValue()) {
+                    result.add(new RemoveSynonym(
+                            entityIri,
+                            propIri,
+                            literalToDisplay(lit)
+                    ));
+                }
+            }
+        }
+
+        return result;
+    }
 
     @Override
     public HighLevelDiff from(DiffResult diffResult) {
@@ -392,6 +634,13 @@ public class HighLevelDiffServiceImpl implements HighLevelDiffService{
         Set<EdgeCreation> edgeCreations = computeEdgeCreations(diffResult);
         Set<EdgeDeletion> edgeDeletions = computeEdgeDeletions(diffResult);
         Set<NodeMove> nodeMoves = computeNodeMoves(edgeCreations, edgeDeletions);
+        Set<PredicateChange> predicateChanges = computePredicateChanges(edgeCreations, edgeDeletions);
+        Set<NodeRename> nodeRenames = computeNodeRenames(diffResult);
+        Set<NewTextDefinition> newTextDefinitions = computeNewTextDefinitions(diffResult);
+        Set<RemoveTextDefinition> removeTextDefinitions = computeRemoveTextDefinitions(diffResult);
+        Set<NodeTextDefinitionChange> nodeTextDefinitionChanges = computeNodeTextDefinitionChanges(diffResult);
+        Set<NewSynonym> newSynonyms = computeNewSynonyms(diffResult);
+        Set<RemoveSynonym> removeSynonyms = computeRemoveSynonyms(diffResult);
 
         return new HighLevelDiff(
                 nodeCreations,
@@ -401,7 +650,14 @@ public class HighLevelDiffServiceImpl implements HighLevelDiffService{
                 edgeCreations,
                 edgeDeletions,
                 classCreations,
-                nodeMoves
+                nodeMoves,
+                predicateChanges,
+                nodeRenames,
+                newTextDefinitions,
+                removeTextDefinitions,
+                nodeTextDefinitionChanges,
+                newSynonyms,
+                removeSynonyms
         );
     }
 }

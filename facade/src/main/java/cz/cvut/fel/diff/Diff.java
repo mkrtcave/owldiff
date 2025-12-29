@@ -23,17 +23,19 @@ public class Diff {
         String u2 = "file:/D:/apollo_sv.owl";
 
         try {
-            final OWLOntologyManager originalM = OWLManager
-                    .createOWLOntologyManager();
-
-            final OWLOntology originalO = originalM.loadOntologyFromOntologyDocument(new IRIDocumentSource(IRI.create(u1)));
-
+            final OWLOntologyManager originalM = OWLManager.createOWLOntologyManager();
             final OWLOntologyManager updateM = OWLManager.createOWLOntologyManager();
+
+            OWLOntology originalO = originalM.loadOntologyFromOntologyDocument(new IRIDocumentSource(IRI.create(u1)));
             OWLOntology updateO = updateM.loadOntologyFromOntologyDocument(new IRIDocumentSource(IRI.create(u2)));
+
             OntologyDiffService service = new OWLDiffOntologyDiffService();
+
             DiffResult result = service.diff(originalO, updateO, Engine.SYNTACTIC);
+
             HighLevelDiffServiceImpl diffService = new HighLevelDiffServiceImpl();
-            System.out.println(diffService.from(result).nodeMoves());
+
+            System.out.println(diffService.from(result).removeSynonyms());
         } catch (OWLException e) {
             e.printStackTrace();
         }

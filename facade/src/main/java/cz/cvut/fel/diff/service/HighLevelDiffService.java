@@ -14,7 +14,14 @@ public interface HighLevelDiffService {
     record EdgeDeletion(String srcIri, String propIri, String tgtIri) {}
     record ClassCreation(String iri) {}
     record NodeMove(String chldIri, String oldPrtIri, String newPrtIri) {}
-    record PredicateChange() {}
+    record SrcTgt(String srcIri, String tgtIri) {}
+    record PredicateChange(String srcIri, String oldPrpIri, String newPrpIri) {}
+    record NodeRename(String classIri, String oldLabel, String newLabel) {}
+    record NewTextDefinition(String classIri, String definition) {}
+    record RemoveTextDefinition(String classIri, String definition) {}
+    record NodeTextDefinitionChange(String classIri, String oldDefinition, String newDefinition) {}
+    record NewSynonym(String entityIri, String propertyIri, String synonym) {}
+    record RemoveSynonym(String entityIri, String propertyIri, String synonym) {}
 
     record HighLevelDiff(
             Set<NodeCreation> nodeCreations,
@@ -24,7 +31,14 @@ public interface HighLevelDiffService {
             Set<EdgeCreation> edgeCreations,
             Set<EdgeDeletion> edgeDeletions,
             Set<ClassCreation> classCreations,
-            Set<NodeMove> nodeMoves
+            Set<NodeMove> nodeMoves,
+            Set<PredicateChange> predicateChanges,
+            Set<NodeRename> nodeRenames,
+            Set<NewTextDefinition> newTextDefinitions,
+            Set<RemoveTextDefinition> removeTextDefinitions,
+            Set<NodeTextDefinitionChange> nodeTextDefinitionChanges,
+            Set<NewSynonym> newSynonyms,
+            Set<RemoveSynonym> removeSynonyms
     ) {}
 
     HighLevelDiff from(DiffResult diffResult);
