@@ -1,0 +1,44 @@
+@prefix ond:  <https://w3id.org/ontodiff/schema#> .
+@prefix ondx: <https://w3id.org/ontodiff/instance#> .
+@prefix prov: <http://www.w3.org/ns/prov#> .
+@prefix kgcl: <https://w3id.org/kgcl/> .
+@prefix owl:  <http://www.w3.org/2002/07/owl#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+
+ond:DiffRun a owl:Class ;
+    rdfs:label "Diff run between ontology versions" ;
+    rdfs:subClassOf prov:Activity .
+
+ond:OntologyVersion a owl:Class ;
+    rdfs:label "Versioned ontology" ;
+    rdfs:subClassOf prov:Entity, owl:Ontology .
+
+ond:DiffProject a owl:Class ;
+    rdfs:label "Ontology diff project" ;
+    rdfs:subClassOf prov:Entity .
+
+ond:fromOntology a owl:ObjectProperty ;
+    rdfs:domain ond:DiffRun ;
+    rdfs:range  ond:OntologyVersion ;
+    rdfs:label  "from ontology" .
+
+ond:toOntology a owl:ObjectProperty ;
+    rdfs:domain ond:DiffRun ;
+    rdfs:range  ond:OntologyVersion ;
+    rdfs:label  "to ontology" .
+
+ond:hasKgclTransaction a owl:ObjectProperty ;
+    rdfs:domain ond:DiffRun ;
+    rdfs:range  kgcl:Transaction ;
+    rdfs:label  "has KGCL transaction" .
+
+ond:inProject a owl:ObjectProperty ;
+    rdfs:domain ond:DiffRun ;
+    rdfs:range  ond:DiffProject ;
+    rdfs:label  "in diff project" .
+
+ond:usesAlgorithm a owl:DatatypeProperty ;
+    rdfs:domain ond:DiffRun ;
+    rdfs:range  rdfs:Literal ;
+    rdfs:label  "uses diff algorithm" .
