@@ -1,4 +1,4 @@
-package cz.cvut.fel.diff.service;
+package cz.cvut.fel.ontodiff.properties;
 
 import java.util.Set;
 

@@ -1,4 +1,4 @@
-package cz.cvut.fel.diff;
+package cz.cvut.fel.ontodiff;
 
 public enum Engine {
     SYNTACTIC,

@@ -1,11 +1,10 @@
-package cz.cvut.fel.diff;
+package cz.cvut.fel.ontodiff;
 
 import org.semanticweb.owlapi.model.OWLAxiom;
 import org.semanticweb.owlapi.model.OWLOntology;
 
 import java.time.Instant;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 public class Builder {

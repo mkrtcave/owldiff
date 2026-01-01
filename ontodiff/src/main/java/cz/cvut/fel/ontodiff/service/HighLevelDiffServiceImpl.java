@@ -1,6 +1,8 @@
-package cz.cvut.fel.diff.service;
+package cz.cvut.fel.ontodiff.service;
 
-import cz.cvut.fel.diff.DiffResult;
+import cz.cvut.fel.ontodiff.DiffResult;
+import cz.cvut.fel.ontodiff.properties.SynonymPropety;
+import cz.cvut.fel.ontodiff.properties.TextDefinitionProperties;
 import org.semanticweb.owlapi.model.*;
 import org.semanticweb.owlapi.vocab.OWLRDFVocabulary;
 

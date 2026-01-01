@@ -1,8 +1,8 @@
-package cz.cvut.fel.diff.service;
+package cz.cvut.fel.ontodiff.service;
 
-import cz.cvut.fel.diff.CexSide;
-import cz.cvut.fel.diff.DiffResult;
-import cz.cvut.fel.diff.Engine;
+import cz.cvut.fel.ontodiff.CexSide;
+import cz.cvut.fel.ontodiff.DiffResult;
+import cz.cvut.fel.ontodiff.Engine;
 import cz.cvut.kbss.owldiff.OWLDiffException;
 import cz.cvut.kbss.owldiff.diff.cex.CEXDiff;
 import cz.cvut.kbss.owldiff.diff.cex.CEXDiffOutput;

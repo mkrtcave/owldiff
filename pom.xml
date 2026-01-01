@@ -31,7 +31,7 @@
         <module>owldiff-core</module>
         <module>owldiff-standalone</module>
         <module>owldiff-parent</module>
-        <module>facade</module>
+        <module>ontodiff</module>
     </modules>
     <build>
         <extensions>
