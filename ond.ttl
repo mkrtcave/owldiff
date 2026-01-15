@@ -10,10 +10,6 @@ ond:DiffRun a owl:Class ;
     rdfs:label "Diff run between ontology versions" ;
     rdfs:subClassOf prov:Activity .
 
-ond:OntologyVersion a owl:Class ;
-    rdfs:label "Versioned ontology" ;
-    rdfs:subClassOf prov:Entity, owl:Ontology .
-
 ond:DiffProject a owl:Class ;
     rdfs:label "Ontology diff project" ;
     rdfs:subClassOf prov:Entity .
