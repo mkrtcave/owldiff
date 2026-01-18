@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>cz.cvut.fel.diff</groupId>
+        <artifactId>owldiff</artifactId>
+        <version>0.2.1-SNAPSHOT</version>
+    </parent>
+
+    <artifactId>ontodiff</artifactId>
+
+    <properties>
+        <maven.compiler.source>17</maven.compiler.source>
+        <maven.compiler.target>17</maven.compiler.target>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    </properties>
+
+    <dependencies>
+        <dependency>
+            <groupId>net.sourceforge.owlapi</groupId>
+            <artifactId>owlapi-distribution</artifactId>
+            <version>5.1.16</version>
+        </dependency>
+        <dependency>
+            <groupId>cz.cvut.kbss</groupId>
+            <artifactId>owldiff-core</artifactId>
+            <version>0.2.1-SNAPSHOT</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.jena</groupId>
+            <artifactId>apache-jena-libs</artifactId>
+            <version>5.5.0</version>
+            <type>pom</type>
+        </dependency>
+    </dependencies>
+
+</project>

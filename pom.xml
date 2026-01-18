@@ -15,7 +15,7 @@
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
     <modelVersion>4.0.0</modelVersion>
-    <groupId>cz.cvut.kbss</groupId>
+    <groupId>cz.cvut.fel.diff</groupId>
     <artifactId>owldiff</artifactId>
     <packaging>pom</packaging>
     <name>OWLDiff</name>
@@ -24,15 +24,14 @@
     <distributionManagement>
         <repository>
             <id>kbss</id>
-            <url>http://kbss.felk.cvut.cz/var/www/m2repo</url>
+            <url>https://kbss.felk.cvut.cz/var/www/m2repo</url>
         </repository>
     </distributionManagement>
     <modules>
-        <module>owldiff-parent</module>
         <module>owldiff-core</module>
-        <module>owldiff-cli</module>
         <module>owldiff-standalone</module>
-        <module>owldiff-protege-plugin</module>
+        <module>owldiff-parent</module>
+        <module>ontodiff</module>
     </modules>
     <build>
         <extensions>
